@@ -4,27 +4,24 @@ $longitude = "-3.091098"
 $azimuth = "0"
 $declination = "45"
 $kwp = "6020"
-$mutator = "1.58"
+$mutator = "1.378"
 #>
+
+
 function Get-SolarForecast {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true, HelpMessage = "Latitude of the location (e.g., 51.5)")]
+        [Parameter(Mandatory = $true, HelpMessage = 'Latitude of the location (e.g., 51.5)')]
         [double]$Latitude,
-        
-        [Parameter(Mandatory = $true, HelpMessage = "Longitude of the location (e.g., -0.1)")]
+        [Parameter(Mandatory = $true, HelpMessage = 'Longitude of the location (e.g., -0.1)')]
         [double]$Longitude,
-        
-        [Parameter(Mandatory = $true, HelpMessage = "Declination angle (e.g., 23.5 for northern hemisphere)")]
+        [Parameter(Mandatory = $true, HelpMessage = 'Declination angle (e.g., 23.5 for northern hemisphere), if unsure use "(Get-SolarDeclination -Date (Get-Date))"')]
         [double]$Declination,
-        
-        [Parameter(Mandatory = $true, HelpMessage = "Azimuth angle (e.g., 180 for due south)")]
+        [Parameter(Mandatory = $true, HelpMessage = 'Azimuth angle (e.g., 180 for due south)')]
         [int]$Azimuth,
-        
-        [Parameter(Mandatory = $true, HelpMessage = "kW potential of the solar system")]
+        [Parameter(Mandatory = $true, HelpMessage = 'kW potential of the solar system')]
         [double]$kWp,
-
-        [Parameter(Mandatory = $true, HelpMessage = "Mutator to compensate for better panels etc...")]
+        [Parameter(Mandatory = $true, HelpMessage = 'Mutator to compensate for newer panels etc...')]
         [double]$Mutator
     )
 
@@ -35,14 +32,13 @@ function Get-SolarForecast {
 
     try {
         $response = Invoke-RestMethod -Uri $url -Method Get
-        
         if ($response.message.type -eq "success") {
             Write-Verbose "Solar forecast for Latitude: $latitude, Longitude: $longitude, Declination: $declination, Azimuth: $azimuth, kWp: $kwp"
             [PSCustomObject]@{
                 RawPredictedkWhToday = [math]::Round(($response.result.$todayDateString / 1000000),2)
-                AdjustedPredictedkWhToday = [math]::Round(($response.result.$todayDateString / 1000000),2) * $mutator
+                AdjustedPredictedkWhToday = [math]::Round((($response.result.$todayDateString / 1000000) * $mutator),2)
                 RawPredictedkWhTomorrow = [math]::Round(($response.result.$tomorrowDateString / 1000000),2)
-                AdjustedPredictedkWhTomorrow = [math]::Round(($response.result.$tomorrowDateString / 1000000),2) * $mutator
+                AdjustedPredictedkWhTomorrow = [math]::Round((($response.result.$tomorrowDateString / 1000000) * $mutator),2)
                 Place = $response.message.info.place
                 Latitude = $response.message.info.latitude
                 Longitude = $response.message.info.longitude
@@ -62,23 +58,15 @@ function Get-SunriseSunset {
     param (
         [Parameter(Mandatory = $true)]
         [DateTime]$Date,
-        
         [Parameter(Mandatory = $true)]
         [double]$Latitude,
-        
         [Parameter(Mandatory = $true)]
         [double]$Longitude
     )
-
     $url = "https://api.sunrise-sunset.org/json?lat=$latitude&lng=$longitude&date=$($date.ToString('yyyy-MM-dd'))&formatted=0"
-
     try {
         $response = Invoke-RestMethod -Uri $url -Method Get
-
         if ($response.status -eq "OK") {
-            #$sunrise = [DateTime]$response.results.sunrise
-            #$sunset = [DateTime]$response.results.sunset
-            
             [PSCustomObject]@{
                 Latitude = $Latitude
                 Longitude = $Longitude
