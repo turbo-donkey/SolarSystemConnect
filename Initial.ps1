@@ -1,19 +1,30 @@
 <#
+.Description
+Uses the API at forecast.solar to give generation prediction
+
+.Notes
+Get your Azimuth at https://osmcompass.com/
+"Draw single leg route" > Show Compass > line up the compass with the
+direction your panels face and its displayed in the upper right corner of the page
+
+Get your latitude and longitude at https://www.latlong.net/
+
+.Example Params
 $latitude = "55.935594"
 $longitude = "-3.091098"
-$azimuth = "0"
+$azimuth = "165"
 $declination = "45"
 $kwp = "6020"
-$mutator = "1.378"
+$mutator = "1.378" #ghetto multiplier to correct consistently low or high predictions for your system
 #>
 
 
 function Get-SolarForecast {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true, HelpMessage = 'Latitude of the location (e.g., 51.5)')]
+        [Parameter(Mandatory = $true, HelpMessage = 'Latitude of the location (e.g., 55.9356)')]
         [double]$Latitude,
-        [Parameter(Mandatory = $true, HelpMessage = 'Longitude of the location (e.g., -0.1)')]
+        [Parameter(Mandatory = $true, HelpMessage = 'Longitude of the location (e.g., -3.091)')]
         [double]$Longitude,
         [Parameter(Mandatory = $true, HelpMessage = 'Declination angle (e.g., 23.5 for northern hemisphere), if unsure use "(Get-SolarDeclination -Date (Get-Date))"')]
         [double]$Declination,
