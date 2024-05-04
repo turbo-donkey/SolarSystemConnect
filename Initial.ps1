@@ -5,11 +5,11 @@ https://www.sunsynk.net/plants/overview/XXXXXX/2
 #>
 
 # Define username and password here for static script
-$UserName = "john@uk-cns.com"
-$Password = "INSVxv5EJgIX4WDY"
-$AccountId = "397094"
-$Longitude = "55.935662370175"
-$Latitude = "-3.091086465865"
+$UserName = ""
+$Password = ""
+$AccountId = ""
+$Longitude = ""
+$Latitude = ""
 
 <#
 # Or allow incoming params instead
