@@ -27,8 +27,12 @@ if (-not $UserName -or -not $Password -or -not $AccountId) {
 }
 #>
 
-# Function to request a bearer token for api access
 function Get-SSCBearerToken {
+    param (
+        [string]$UserName,
+        [string]$Password
+    )
+
     $loginurl = 'https://api.sunsynk.net/oauth/token'
     $headers = @{
         'Content-type' = 'application/json'
@@ -46,17 +50,206 @@ function Get-SSCBearerToken {
 
     $response = Invoke-RestMethod -Uri $loginurl -Method Post -Headers $headers -Body ($payload | ConvertTo-Json)
     $access_token = $response.data.access_token
+    Remove-Variable -Name "payload","password"
     return "Bearer $access_token"
 }
 
-# Function to get plant id and current generation in Watts
+function Get-SSCPlantList {
+    param (
+        [string]$BearerToken
+    )
+    $api_endpoint_query_plants = "$apiBaseUrl/plants?page=1&limit=10&name=&status="
+    $headers = @{
+        'Content-type' = 'application/json'
+        'Accept' = 'application/json'
+        'Accept-Language' = 'en-US,en;q=0.5'
+        'Accept-Encoding' = 'gzip, deflate, br'
+        'Authorization' = $BearerToken
+    }
+    try {
+        $response = Invoke-RestMethod -Uri $api_endpoint_query_plants -Method Get -Headers $headers
+        foreach ($plant in $response.data.infos) {
+            [PSCustomObject]@{
+                Id = [int]$plant.Id
+                Name = [string]$plant.Name
+                Status = [int]$plant.status
+                StatusDescription = switch ($plant.status) {
+                    0 { "Fuck Knows, Guessing OFFLINE?" }
+                    1 { "Normal" }
+                    2 { "Fuck Knows, Guessing WARMING!" }
+                    3 { "Fuck Knows, Guessing FAULT!" }
+                }
+                Address = [string]$plant.address
+                GenerationCurrentkW = [int]$plant.pac /1000
+                GenerationTodaykWh = [int]$plant.etoday
+                GenerationTotalkWh = [int]$plant.etotal
+                LastUpdate = [DateTime]$plant.updateAt
+                Commissioned = [DateTime]$plant.createAt
+                Type = [int]$plant.type
+                MasterAccountId = [string]$plant.masterId
+                Shared = [bool]$plant.Shared
+                HasCamera = [bool]$plant.existCamera
+                ContactEmail = [string]$plant.email
+                ContactPhone = [string]$plant.phone
+                PlantPermissions = $plant.plantPermission
+            }
+        }
+    }
+    catch {
+        if ($error[0].ErrorDetails.Message -match '"code":401') {
+            Write-Warning "Failed to retrieve plant data (401) - try renewing the bearer token."
+        } else {
+            Write-Warning "Failed to retrieve plant data. Error: $_"
+        }
+    }
+}
+
+function Get-SSCPEquipmentInverters {
+    param (
+        [string]$BearerToken
+    )
+
+    $api_endpoint_query_equipment_inverters = "$apiBaseUrl/inverters?page=1&limit=10&total=0&status=-1&sn=&plantId=&type=-2&softVer=&hmiVer=&agentCompanyId=-1&gsn="
+    $headers = @{
+        'Content-type' = 'application/json'
+        'Accept' = 'application/json'
+        'Accept-Language' = 'en-US,en;q=0.5'
+        'Accept-Encoding' = 'gzip, deflate, br'
+        'Authorization' = $BearerToken
+    }
+    try {
+        $response = Invoke-RestMethod -Uri $api_endpoint_query_equipment_inverters -Method Get -Headers $headers
+        foreach ($inverter in $response.data.infos) {
+            [PSCustomObject]@{
+                Id = [string]$inverter.id
+                Name = [string]$inverter.plant.name
+                Serial = [string]$inverter.sn
+                Alias = [string]$inverter.Alias
+                GatewaySerial = [string]$inverter.gsn
+                GatewayStatus = [int]$inverter.gatewatVO.status
+                CommsType = [string]$inverter.commTypeName
+                CustomerCode = [int]$inverter.custCode
+                Status = [int]$inverter.status
+                StatusDescription = switch ($inverter.status) {
+                    0 { "Fuck Knows" }
+                    1 { "Normal" }
+                    2 { "Fuck Knows" }
+                    3 { "Fuck Knows" }
+                    4 { "Fuck Knows, Guessing UPGRADING!" }
+                }
+                GenerationCurrentkW = [int]$inverter.pac / 1000
+                GenerationTodaykWh = [int]$inverter.etoday
+                GenerationTotalkWh = [int]$inverer.etotal
+                LastUpdate = [DateTime]$inverter.updateAt
+                SynSynkEquipment = [bool]$inverter.sunsynkEquip
+                ProtocolIdentifier = [int]$inverter.protocolIdentifier
+                EquipmentType = [int]$inverter.equipType
+            }
+        }
+    }
+    catch {
+        if ($error[0].ErrorDetails.Message -match '"code":401') {
+            Write-Warning "Failed to retrieve plant data (401) - try renewing the bearer token."
+        } else {
+            Write-Warning "Failed to retrieve plant data. Error: $_"
+        }
+    }
+}
+
+function Get-SSCEquipmentGateways {
+    param (
+        [string]$BearerToken
+    )
+
+    $api_endpoint_query_equipment_gateways = "$apiBaseUrl/gateways?page=1&limit=10&status=-1&sn=&plantId=&uploadCycle=-1&softVer=&hardVer=&invSn=&protocol=-1&agentCompanyId=-1&lan=en"
+    $headers = @{
+        'Content-type' = 'application/json'
+        'Accept' = 'application/json'
+        'Accept-Language' = 'en-US,en;q=0.5'
+        'Accept-Encoding' = 'gzip, deflate, br'
+        'Authorization' = $BearerToken
+    }
+    try {
+        $response = Invoke-RestMethod -Uri $api_endpoint_query_equipment_gateways -Method Get -Headers $headers
+        foreach ($gateway in $response.data.infos) {
+            [PSCustomObject]@{
+                Id = [string]$gateway.id
+                PlantId = [string]$gateway.plant.id
+                PlantName = [string]$gateway.plant.name
+                Serial = [string]$gateway.sn
+                Key = [string]$gateway.key
+                Status = [int]$gateway.status
+                StatusDescription = switch ($gateway.status) {
+                    0 { "Fuck Knows" }
+                    1 { "Fuck Knows" }
+                    2 { "Online" }
+                }
+                CommType = [int]$gateway.commType
+                CommTypeName = $gateway.commTypeName
+                Signal = [int]$gateway.signal
+                SoftwareVersion = [string]$gateway.softVer
+                HardwareVersion = [string]$gateway.hardVer
+                Model = [string]$gateway.model
+                DevName = [string]$gateway.devName
+                Protocol = [string]$gateway.proto
+                LastUpdate = [DateTime]$gateway.updateAt
+                LastSeen = [DateTime]$gateway.lldt
+                UploadFrequencySec = [int]$gatewat.uploadCycle
+            }
+        }
+    }
+    catch {
+        if ($error[0].ErrorDetails.Message -match '"code":401') {
+            Write-Warning "Failed to retrieve gateway data (401) - try renewing the bearer token."
+        } else {
+            Write-Warning "Failed to retrieve gateway data. Error: $_"
+        }
+    }
+}
+
+function Restart-SSCGatway {
+    param (
+        [string]$BearerToken,
+        [string]$GatewaySerial
+    )
+    $api_endpoint_restart_gateway = "$apiBaseUrl/gateway/E470122C6849/restart"
+    $headers = @{
+        'Content-type' = 'application/json'
+        'Accept' = 'application/json'
+        'Accept-Language' = 'en-US,en;q=0.5'
+        'Accept-Encoding' = 'gzip, deflate, br'
+        'Authorization' = $BearerToken
+    }
+
+    # Define the JSON body data
+    $body = @{
+        "gsns" = $GatewaySerial
+    } | ConvertTo-Json
+
+    try {
+        $response = Invoke-RestMethod -Uri $api_endpoint_restart_gateway -Method Post -Headers $headers -Body $body
+        if ($response.data -eq "command send successful") {Write-Output "Gateway $($GatewaySerial) has successfully recieved a restart command."}
+    }
+    catch {
+        if ($error[0].ErrorDetails.Message -match '"code":401') {
+            Write-Warning "Failed to retrieve gateway data (401) - try renewing the bearer token."
+        } else {
+            Write-Warning "Failed to retrieve gateway data. Error: $_"
+        }
+    }
+}
+
+function Set-SSCGateway {
+    
+}
+
 function Get-SSCPowerFlow {
     param (
         [string]$BearerToken,
         [string]$AccountId
     )
 
-    $api_endpoint_powerflow = "https://api.sunsynk.net/api/v1/plant/energy/$($AccountId)/flow?date=$((Get-Date).ToString("yyyy-MM-dd"))"
+    $api_endpoint_powerflow = "$apiBaseUrl/plant/energy/$($AccountId)/flow?date=$((Get-Date).ToString("yyyy-MM-dd"))"
 
     $headers = @{
         'Content-type' = 'application/json'
@@ -96,7 +289,7 @@ function Get-SSCGenerationPurpose {
         [string]$AccountId
     )
 
-    $api_endpoint_generation_purpose = "https://api.sunsynk.net/api/v1/plant/energy/$AccountId/generation/use"
+    $api_endpoint_generation_purpose = "$apiBaseUrl/plant/energy/$AccountId/generation/use"
 
     $headers = @{
         'Content-type' = 'application/json'
@@ -129,7 +322,7 @@ function Get-SSCAbnormalStatistics {
         [string]$AccountId
     )
 
-    $api_endpoint_event_count = "https://api.sunsynk.net/api/v1/plant/$AccountId/eventCount"
+    $api_endpoint_event_count = "$apiBaseUrl/plant/$AccountId/eventCount"
     $headers = @{
         'Content-type' = 'application/json'
         'Accept' = 'application/json'
@@ -157,12 +350,10 @@ function Get-SSCAbnormalStatistics {
 function Get-SSCWeatherInfo {
     param (
         [string]$BearerToken,
-        [string]$AccountId,
-        [string]$Longitude,
-        [string]$Latitude
+        [string]$AccountId
     )
-
-    $api_endpoint_current_weather = "https://api.sunsynk.net/api/v1/weather?lan=en&date=2024-05-03&lonLat=$Longitude,$Latitude"
+    $latlon = Get-SSCPlantInfo -BearerToken $bearerToken -AccountId $AccountId | Select-Object Latitude, Longitude
+    $api_endpoint_current_weather = "$apiBaseUrl/weather?lan=en&date=2024-05-03&lonLat=$(($latlon).Longitude),$(($latlon).Latitude)"
     $headers = @{
         'Content-type' = 'application/json'
         'Accept' = 'application/json'
@@ -181,7 +372,9 @@ function Get-SSCWeatherInfo {
             WindDirection = [int]$response.data.currWea.windDirection
             SunRise = [DateTime]$response.data.currWea.sunrise
             SunSet = [DateTime]$response.data.currWea.sunset
-            IconURL = [string]$response.data.currWea.iconUrl  
+            IconURL = [string]$response.data.currWea.iconUrl
+            Latitude = [string]$latlon.Latitude
+            Longitude = [string]$latlon.Longitude
         }
     }
     catch {
@@ -194,13 +387,12 @@ function Get-SSCWeatherInfo {
 }
 
 function Get-SSCPlantInfo {
-    
     param (
         [string]$BearerToken,
         [string]$AccountId
     )
 
-    $api_endpoint_plant_info = "https://api.sunsynk.net/api/v1/plant/$AccountId" + '?lan=en&id=' + "$AccountId"
+    $api_endpoint_plant_info = "$apiBaseUrl/plant/$AccountId" + '?lan=en&id=' + "$AccountId"
     $headers = @{
         'Content-type' = 'application/json'
         'Accept' = 'application/json'
@@ -214,17 +406,39 @@ function Get-SSCPlantInfo {
             AccountId = [string]$response.data.id
             Name = [string]$response.data.name
             Address = [string]$response.data.address
-            Latitude = [int]$response.data.lat
-            Longitude = [int]$response.data.lon
+            Latitude = [string]$response.data.lat
+            Longitude = [string]$response.data.lon
             CapacitykWp = [string]$response.data.totalPower
             CommissioningDate = [DateTime]$response.data.joinDate
+            Investment = [int]$response.data.invest
+            GenerationCurrentlykW = [int]$response.data.realtime.pac
+            GenerationTodaykWh = [int]$response.data.realtime.etoday
+            GenerationMonthkWh = [int]$response.data.realtime.emonth
+            GenerationYearkWh = [int]$response.data.realtime.eyear
+            GenerationTotalkWh = [int]$response.data.realtime.etotal
+            GenerationTotalsLastUpdated = [DateTime]$response.data.realtime.updateAt
+            RevenueToday = [int]$response.data.realtime.income
+            Currency = [PSCustomObject]@{
+                Id = [string]$response.data.currency.id
+                Code = [string]$response.data.currency.code
+                Symbol = [string]$response.data.currency.text
+            }
+            Efficiency = [int]$response.data.realtime.efficiency
+            Type = [int]$response.data.type
+            Status = [int]$response.data.status
+            TimeZone = [PSCustomObject]@{
+                Id = $response.data.timezone.id
+                Code = $response.data.timezone.code
+                Description = $response.data.timezone.text
+            }
+            Charges = $response.data.charges
             Installer = [string]$response.data.installer
             Engineer = [string]$response.data.principal
             Contact = [string]$response.data.phone
             Email = [string]$response.data.email
             Master = [string]$response.data.master
-
-
+            PlantPermissions = $response.data.plantPermission
+            FluxProducts = $response.data.fluxProducts
         }
     }
     catch {
@@ -237,14 +451,13 @@ function Get-SSCPlantInfo {
 
 }
 
-
 function Get-SSCInverterSystemMode {
     param (
         [string]$BearerToken,
         [string]$InverterSerial
     )
 
-    $api_endpoint_inverter_settings_read = "https://api.sunsynk.net/api/v1/common/setting/$InverterSerial/read"
+    $api_endpoint_inverter_settings_read = "$apiBaseUrl/common/setting/$InverterSerial/read"
 
     $headers = @{
         'Content-type' = 'application/json'
@@ -371,7 +584,7 @@ function Set-SSCInverterSystemMode {
     )
 
     # Define the API endpoint URL
-    $api_endpoint_inverter_settings_set = "https://api.sunsynk.net/api/v1/common/setting/$InverterSerial/set"
+    $api_endpoint_inverter_settings_set = "$apiBaseUrl/common/setting/$InverterSerial/set"
 
     # Get the current settings
     $currentSettings = Get-SSCInverterSystemMode -BearerToken $bearerToken -InverterSerial $InverterSerial
