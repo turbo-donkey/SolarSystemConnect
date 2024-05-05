@@ -1,17 +1,4 @@
 <#
-AccountId is visible in the URL when you're logged into SunSynk Connect:
-https://www.sunsynk.net/plants/overview/XXXXXX/2
-                                        ^^^^^^
-#>
-
-# Define username and password here for static script
-$UserName = ""
-$Password = ""
-$AccountId = ""
-$Longitude = ""
-$Latitude = ""
-
-<#
 # Or allow incoming params instead
 param (
     [string]$UserName = $args[0],
@@ -26,6 +13,7 @@ if (-not $UserName -or -not $Password -or -not $AccountId) {
     exit 1  # Optionally exit the script with a non-zero exit code indicating failure
 }
 #>
+
 
 function Get-SSCBearerToken {
     param (
@@ -56,8 +44,17 @@ function Get-SSCBearerToken {
 
 function Get-SSCPlantList {
     param (
+        [Parameter(Mandatory = $true, HelpMessage = 'To get your BearerToken you must first call Get-SSCBearerToken')]
+        [ValidateScript({
+            if ($_ -match "^Bearer\s") {
+                $true
+            } else {
+                throw "Invalid bearer token!"
+            }
+        })]
         [string]$BearerToken
     )
+
     $api_endpoint_query_plants = "$apiBaseUrl/plants?page=1&limit=10&name=&status="
     $headers = @{
         'Content-type' = 'application/json'
@@ -106,6 +103,14 @@ function Get-SSCPlantList {
 
 function Get-SSCPEquipmentInverters {
     param (
+        [Parameter(Mandatory = $true, HelpMessage = 'To get your BearerToken you must first call Get-SSCBearerToken')]
+        [ValidateScript({
+            if ($_ -match "^Bearer\s") {
+                $true
+            } else {
+                throw "Invalid bearer token!"
+            }
+        })]
         [string]$BearerToken
     )
 
@@ -158,6 +163,14 @@ function Get-SSCPEquipmentInverters {
 
 function Get-SSCEquipmentGateways {
     param (
+        [Parameter(Mandatory = $true, HelpMessage = 'To get your BearerToken you must first call Get-SSCBearerToken')]
+        [ValidateScript({
+            if ($_ -match "^Bearer\s") {
+                $true
+            } else {
+                throw "Invalid bearer token!"
+            }
+        })]
         [string]$BearerToken
     )
 
@@ -169,6 +182,7 @@ function Get-SSCEquipmentGateways {
         'Accept-Encoding' = 'gzip, deflate, br'
         'Authorization' = $BearerToken
     }
+
     try {
         $response = Invoke-RestMethod -Uri $api_endpoint_query_equipment_gateways -Method Get -Headers $headers
         foreach ($gateway in $response.data.infos) {
@@ -194,25 +208,37 @@ function Get-SSCEquipmentGateways {
                 Protocol = [string]$gateway.proto
                 LastUpdate = [DateTime]$gateway.updateAt
                 LastSeen = [DateTime]$gateway.lldt
-                UploadFrequencySec = [int]$gatewat.uploadCycle
+                UploadFrequencySec = [int]$gateway.uploadCycle
             }
         }
+        if ($response.code -ne "0") {Write-Warning "Failed to request gateway data - $(($response).msg)"}
     }
     catch {
         if ($error[0].ErrorDetails.Message -match '"code":401') {
-            Write-Warning "Failed to retrieve gateway data (401) - try renewing the bearer token."
+            Write-Warning "Failed to request gateway data (401) - try renewing the bearer token."
         } else {
-            Write-Warning "Failed to retrieve gateway data. Error: $_"
+            Write-Warning "Failed to request gateway data. Error: $_"
         }
     }
 }
 
 function Restart-SSCGatway {
     param (
+        [Parameter(Mandatory = $true, HelpMessage = 'To get your BearerToken you must first call Get-SSCBearerToken')]
+        [ValidateScript({
+            if ($_ -match "^Bearer\s") {
+                $true
+            } else {
+                throw "Invalid bearer token!"
+            }
+        })]
         [string]$BearerToken,
+        [Parameter(Mandatory = $true, HelpMessage = "Please provide the Gateway serial number, you can find with Get-SSCEquipmentGateways")]
+        [ValidatePattern("^[a-zA-Z0-9]+$", ErrorMessage = "Gateway serial must contain only numbers and letters.")]
         [string]$GatewaySerial
     )
-    $api_endpoint_restart_gateway = "$apiBaseUrl/gateway/E470122C6849/restart"
+
+    $api_endpoint_restart_gateway = "$apiBaseUrl/gateway/$GatewaySerial/restart"
     $headers = @{
         'Content-type' = 'application/json'
         'Accept' = 'application/json'
@@ -240,16 +266,80 @@ function Restart-SSCGatway {
 }
 
 function Set-SSCGateway {
-    
+    param (
+        [Parameter(Mandatory = $true, HelpMessage = 'To get your BearerToken you must first call Get-SSCBearerToken')]
+        [ValidateScript({
+            if ($_ -match "^Bearer\s") {
+                $true
+            } else {
+                throw "Invalid bearer token!"
+            }
+        })]
+        [string]$BearerToken,
+        [Parameter(Mandatory = $true, HelpMessage = "Please provide the Gateway serial number, you can find with Get-SSCEquipmentGateways")]
+        [ValidatePattern("^[a-zA-Z0-9]+$", ErrorMessage = "Gateway serial must contain only numbers and letters.")]
+        [string]$GatewaySerial,
+        [ValidateSet("30","60", "180", "300", "600")]
+        [int]$UploadCycle,
+        [bool]$Restart
+    )
+
+    # Some custom param validation
+    if ($UploadCycle -and $Restart) {throw "Parameters -UploadCycle and -Restart cannot be specified together. Please specify only one of them."}
+    if (-not ($UploadCycle -or $Restart)) {throw "Either -UploadCycle or -Restart must be specified."}
+    if ($UploadCycle) {Write-Verbose "UploadCycle is set to $UploadCycle"} elseif ($Restart) {Write-Verbose "Restart flag is set"}
+
+    $api_endpoint_gateway_uploadcycle = "$apiBaseUrl/gateway/$GatewaySerial/uploadCycle"
+    $headers = @{
+        'Content-type' = 'application/x-www-form-urlencoded'
+        'Accept' = 'application/json'
+        'Accept-Language' = 'en-GB,en;q=0.9,en-US;q=0.8'
+        'Accept-Encoding' = 'gzip, deflate, br, zstd'
+        'Authorization' = $BearerToken
+    }
+
+    # Define the body data
+    $body = @{
+        'seconds' = $UploadCycle
+    }
+
+    try {
+        $response = Invoke-RestMethod -Uri $api_endpoint_gateway_uploadcycle -Method Post -Headers $headers -Body $body
+        if ($response.data -eq "command send successful") {Write-Output "Gateway $($GatewaySerial) has successfully recieved the new upload cycle."}
+        if ($response.code -ne "0") {Write-Warning "Failed to set gateway data - $(($response).msg)"}
+    }
+    catch {
+        if ($error[0].ErrorDetails.Message -match '"code":401') {
+            Write-Warning "Failed to retrieve gateway data (401) - try renewing the bearer token."
+        } else {
+            Write-Warning "Failed to retrieve gateway data. Error: $_"
+        }
+    }
 }
 
 function Get-SSCPowerFlow {
     param (
+        [Parameter(Mandatory = $true, HelpMessage = 'To get your BearerToken you must first call Get-SSCBearerToken')]
+        [ValidateScript({
+            if ($_ -match "^Bearer\s") {
+                $true
+            } else {
+                throw "Invalid bearer token!"
+            }
+        })]
         [string]$BearerToken,
-        [string]$AccountId
+        [Parameter(Mandatory = $false, HelpMessage = "Specify the plant ID.")]
+        [ValidateScript({
+            if ($_ -match '^\d{6}$') {
+                $true
+            } else {
+                throw "Invalid format for PlantId. Expecting 6 digits (0-9)."
+            }
+        })]
+        [string]$PlantId
     )
 
-    $api_endpoint_powerflow = "$apiBaseUrl/plant/energy/$($AccountId)/flow?date=$((Get-Date).ToString("yyyy-MM-dd"))"
+    $api_endpoint_powerflow = "$apiBaseUrl/plant/energy/$($PlantId)/flow?date=$((Get-Date).ToString("yyyy-MM-dd"))"
 
     $headers = @{
         'Content-type' = 'application/json'
@@ -285,11 +375,27 @@ function Get-SSCPowerFlow {
 
 function Get-SSCGenerationPurpose {
     param (
+        [Parameter(Mandatory = $true, HelpMessage = 'To get your BearerToken you must first call Get-SSCBearerToken')]
+        [ValidateScript({
+            if ($_ -match "^Bearer\s") {
+                $true
+            } else {
+                throw "Invalid bearer token!"
+            }
+        })]
         [string]$BearerToken,
-        [string]$AccountId
+        [Parameter(Mandatory = $false, HelpMessage = "Specify the plant ID.")]
+        [ValidateScript({
+            if ($_ -match '^\d{6}$') {
+                $true
+            } else {
+                throw "Invalid format for PlantId. Expecting 6 digits (0-9)."
+            }
+        })]
+        [string]$PlantId
     )
 
-    $api_endpoint_generation_purpose = "$apiBaseUrl/plant/energy/$AccountId/generation/use"
+    $api_endpoint_generation_purpose = "$apiBaseUrl/plant/energy/$PlantId/generation/use"
 
     $headers = @{
         'Content-type' = 'application/json'
@@ -318,11 +424,27 @@ function Get-SSCGenerationPurpose {
 
 function Get-SSCAbnormalStatistics {
     param (
+        [Parameter(Mandatory = $true, HelpMessage = 'To get your BearerToken you must first call Get-SSCBearerToken')]
+        [ValidateScript({
+            if ($_ -match "^Bearer\s") {
+                $true
+            } else {
+                throw "Invalid bearer token!"
+            }
+        })]
         [string]$BearerToken,
-        [string]$AccountId
+        [Parameter(Mandatory = $false, HelpMessage = "Specify the plant ID.")]
+        [ValidateScript({
+            if ($_ -match '^\d{6}$') {
+                $true
+            } else {
+                throw "Invalid format for PlantId. Expecting 6 digits (0-9)."
+            }
+        })]
+        [string]$PlantId
     )
 
-    $api_endpoint_event_count = "$apiBaseUrl/plant/$AccountId/eventCount"
+    $api_endpoint_event_count = "$apiBaseUrl/plant/$PlantId/eventCount"
     $headers = @{
         'Content-type' = 'application/json'
         'Accept' = 'application/json'
@@ -349,10 +471,26 @@ function Get-SSCAbnormalStatistics {
 
 function Get-SSCWeatherInfo {
     param (
+        [Parameter(Mandatory = $true, HelpMessage = 'To get your BearerToken you must first call Get-SSCBearerToken')]
+        [ValidateScript({
+            if ($_ -match "^Bearer\s") {
+                $true
+            } else {
+                throw "Invalid bearer token!"
+            }
+        })]
         [string]$BearerToken,
-        [string]$AccountId
+        [Parameter(Mandatory = $false, HelpMessage = "Specify the plant ID.")]
+        [ValidateScript({
+            if ($_ -match '^\d{6}$') {
+                $true
+            } else {
+                throw "Invalid format for PlantId. Expecting 6 digits (0-9)."
+            }
+        })]
+        [string]$PlantId
     )
-    $latlon = Get-SSCPlantInfo -BearerToken $bearerToken -AccountId $AccountId | Select-Object Latitude, Longitude
+    $latlon = Get-SSCPlantInfo -BearerToken $bearerToken -PlantId $PlantId | Select-Object Latitude, Longitude
     $api_endpoint_current_weather = "$apiBaseUrl/weather?lan=en&date=2024-05-03&lonLat=$(($latlon).Longitude),$(($latlon).Latitude)"
     $headers = @{
         'Content-type' = 'application/json'
@@ -388,11 +526,27 @@ function Get-SSCWeatherInfo {
 
 function Get-SSCPlantInfo {
     param (
+        [Parameter(Mandatory = $true, HelpMessage = 'To get your BearerToken you must first call Get-SSCBearerToken')]
+        [ValidateScript({
+            if ($_ -match "^Bearer\s") {
+                $true
+            } else {
+                throw "Invalid bearer token!"
+            }
+        })]
         [string]$BearerToken,
-        [string]$AccountId
+        [Parameter(Mandatory = $false, HelpMessage = "Specify the plant ID.")]
+        [ValidateScript({
+            if ($_ -match '^\d{6}$') {
+                $true
+            } else {
+                throw "Invalid format for PlantId. Expecting 6 digits (0-9)."
+            }
+        })]
+        [string]$PlantId
     )
 
-    $api_endpoint_plant_info = "$apiBaseUrl/plant/$AccountId" + '?lan=en&id=' + "$AccountId"
+    $api_endpoint_plant_info = "$apiBaseUrl/plant/$PlantId" + '?lan=en&id=' + "$PlantId"
     $headers = @{
         'Content-type' = 'application/json'
         'Accept' = 'application/json'
