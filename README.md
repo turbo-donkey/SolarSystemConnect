@@ -8,4 +8,6 @@
 <h4 align="center">
 SolarSystemConnect is a PowerShell wrapper for the SunSynk Connect API
 </h4>
-More stuff here as I figure it out!
+<div align="center">
+Import-Module C:\Module\Path\SSC\SSC.psd1 -Force -Verbose
+</div>
