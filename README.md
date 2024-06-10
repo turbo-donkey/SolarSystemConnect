@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src=".\ssc_icon.png" alt="logo"></a>
+  <img src=".\ssc_logo.png" alt="logo"></a>
   <br>
   SolarSystemConnect
   <br>
