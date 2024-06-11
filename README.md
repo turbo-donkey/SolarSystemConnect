@@ -5,11 +5,9 @@
   SolarSystemConnect
   <br>
 </h1>
-<h4 align="center">
-SolarSystemConnect is a PowerShell wrapper for the SunSynk Connect API
-</h4>
 <div align="center">
   
+# SolarSystemConnect is a PowerShell wrapper for the SunSynk Connect API
 ## Example Use
 
 ### Import the module with:
