@@ -27,8 +27,8 @@ $SSCGateway = Get-SSCGateway
 ```
 Get-SSCGenerationPurpose -PlantId $SSCPlant.Id
 Get-SSCPowerFlow -PlantId $SSCPlant.Id
-Get-SSCInverterSystemMode -InverterSerial $SSCInverter.Id
-Set-SSCInverterSystemMode -InverterSerial $SSCInverter.Id -Time1 02:00 -Time1Power 3600 -Time1StateOfCharge 100 -GridCharge1Enabled $true
+Get-SSCInverterSystemMode -InverterSerial $SSCInverter.Serial
+Set-SSCInverterSystemMode -InverterSerial $SSCInverter.Serial -Time1 02:00 -Time1Power 3600 -Time1StateOfCharge 100 -GridCharge1Enabled $true
 ```
 
 ### Disclaimer
