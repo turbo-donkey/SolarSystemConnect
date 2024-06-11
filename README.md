@@ -13,6 +13,8 @@
 ```
 Import-Module C:\Module\Path\SSC\SSC.psd1 -Force -Verbose
 ```
+### Permissions
+Installer permissions are needed to use Set-SSCGateway, request the permissions from SunSynk here - [User Level Access Change Request](https://www.sunsynk.org/remote-monitoring#:~:text=An%20approved%20installer%20can%20create,certain%20or%20all%20settings%20%2F%20parameters.)
 ### Connect to the SunSynk API
 ```
 Connect-SSC -Credentials (Get-Credental)
