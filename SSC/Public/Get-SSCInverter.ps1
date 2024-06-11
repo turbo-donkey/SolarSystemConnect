@@ -7,9 +7,12 @@ function Get-SSCInverter {
         The Get-SSCInverter cmdlet returns a list of inverters.
 
         .EXAMPLE
-        Get-SSCInverter
-        Returns a list of your inverters.
+        Get-SSCInverter | Select Id, StatusDescription, LastUpdate
 
+        Id     StatusDescription LastUpdate
+        --     ----------------- ----------
+        192048 Normal            11/06/2024 11:03:51
+        
         .NOTES
 
         .LINK
@@ -42,7 +45,7 @@ function Get-SSCInverter {
             GenerationTodaykWh = [int]$inverter.etoday
             GenerationTotalkWh = [int]$inverer.etotal
             LastUpdate = [DateTime]$inverter.updateAt
-            SynSynkEquipment = [bool]$inverter.sunsynkEquip
+            SynSynkEquipment = ConvertTo-Boolean $inverter.sunsynkEquip
             ProtocolIdentifier = [int]$inverter.protocolIdentifier
             EquipmentType = [int]$inverter.equipType
         }

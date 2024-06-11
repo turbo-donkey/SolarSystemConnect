@@ -74,19 +74,19 @@ function Get-SSCPowerFlow {
         UPSPower = $response.data.upsLoadPower
         HomeLoadPower = $response.data.homeLoadPower
         BatterySOC = $response.data.soc
-        GridExists = [bool]$response.data.existsGrid
-        GridImport = [bool]$response.data.gridTo
-        GridExport = [bool]$response.data.toGrid
-        BatteryCharge = [bool]$response.data.toBat
-        BatteryDischarge = [bool]$response.data.batTo
-        BMSFault = [bool]$response.data.bmsCommFaultFlag
-        GenExists = [bool]$response.data.existsGen
-        GenOn = [bool]$response.data.genOn
-        GenLoad = [bool]$response.data.genTo
-        LoadSupply = [bool]$response.data.toLoad
-        UPSSupply = [bool]$response.data.toUpsLoad
-        ThinkPowerExists = [bool]$response.data.existThinkPower
-        ThreeLoadExists = [bool]$response.data.existsThreeLoad
-        SmartLoadExists = [bool]$response.data.existsSmartLoad
+        GridExists = ConvertTo-Boolean $response.data.existsGrid
+        GridImport = ConvertTo-Boolean $response.data.gridTo
+        GridExport = ConvertTo-Boolean $response.data.toGrid
+        BatteryCharge = ConvertTo-Boolean $response.data.toBat
+        BatteryDischarge = ConvertTo-Boolean $response.data.batTo
+        BMSFault = ConvertTo-Boolean $response.data.bmsCommFaultFlag
+        GenExists = ConvertTo-Boolean $response.data.existsGen
+        GenOn = ConvertTo-Boolean $response.data.genOn
+        GenLoad = ConvertTo-Boolean $response.data.genTo
+        LoadSupply = ConvertTo-Boolean $response.data.toLoad
+        UPSSupply = ConvertTo-Boolean $response.data.toUpsLoad
+        ThinkPowerExists = ConvertTo-Boolean $response.data.existThinkPower
+        ThreeLoadExists = ConvertTo-Boolean $response.data.existsThreeLoad
+        SmartLoadExists = ConvertTo-Boolean $response.data.existsSmartLoad
     }
 }

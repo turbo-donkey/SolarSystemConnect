@@ -7,7 +7,7 @@ function Restart-SSCGateway {
         The Restart-SSCGateway restarts the gateway device.
 
         .PARAMETER GatewaySerial
-        This cmdlet required a gateway serial number, call Get-SSCGateway to find.
+        This cmdlet requires a gateway serial number, call Get-SSCGateway to find.
 
         .EXAMPLE
         Restart-SSCGateway -GatewaySerial (Get-SSCGateway)[0].Serial
@@ -58,7 +58,7 @@ function Restart-SSCGateway {
             Method = $method
             ResponseCode = $response.code
             ResponseMessage = $response.msg
-            Success = [bool]$response.success
+            Success = ConvertTo-Boolean $response.success
         }
     }
 }

@@ -5,7 +5,7 @@ function Set-SSCGateway {
 
         .DESCRIPTION
         The Set-SSCGateway changes settings on the gateway device.  Currently only the upload cycle can be changed.
-        Intervals of "30","60", "180", "300", "600" are permitted by SunSynk.
+        Intervals of "60", "180", "300", "600" are permitted by SunSynk.
 
         .PARAMETER GatewaySerial
         This cmdlet required a gateway serial number, call Get-SSCGateway to find.
@@ -68,7 +68,7 @@ function Set-SSCGateway {
             Request = $body
             ResponseCode = $response.code
             ResponseMessage = $response.msg
-            Success = [bool]$response.success
+            Success = ConvertTo-Boolean $response.success
         }
     }
 }

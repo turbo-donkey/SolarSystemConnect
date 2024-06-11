@@ -39,8 +39,8 @@ function Get-SSCPlant {
             Commissioned = [DateTime]$plant.createAt
             Type = [int]$plant.type
             MasterAccountId = [string]$plant.masterId
-            Shared = [bool]$plant.Shared
-            HasCamera = [bool]$plant.existCamera
+            Shared = ConvertTo-Boolean $plant.Shared
+            HasCamera = ConvertTo-Boolean $plant.existCamera
             ContactEmail = [string]$plant.email
             ContactPhone = [string]$plant.phone
             PlantPermissions = $plant.plantPermission

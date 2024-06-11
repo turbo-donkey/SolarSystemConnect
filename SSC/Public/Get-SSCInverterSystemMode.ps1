@@ -121,7 +121,7 @@ function Get-SSCInverterSystemMode {
             1 { "Zero Export & Limit to Load Only" }
             2 { "Limited to Home" }
         }
-        SolarExport = [bool]$response.data.solarSell
+        SolarExport = ConvertTo-Boolean $response.data.solarSell
         MaxSellPower = $response.data.pvMaxLimit
         EnergyPriority = $response.data.energyMode
         EnergyPriorityDescription = switch ($response.data.energyMode) {
