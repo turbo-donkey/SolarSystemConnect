@@ -21,7 +21,7 @@ Connect-SSC -Credentials (Get-Credental)
 ```
 $SSCPlant = Get-SSCPlant
 $SSCInverter = Get-SSCInverter
-$SSCGateway = Get-Gateway
+$SSCGateway = Get-SSCGateway
 ```
 ### Get into it
 ```
