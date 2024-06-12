@@ -55,6 +55,8 @@ function Set-SSCInverterSystemMode {
             }
         })]
         [string]$InverterSerial,
+        [Parameter(Mandatory = $false)]
+        [ValidateSet($true, $false)]
         [bool]$SolarExport,
         [Parameter(Mandatory = $false)]
         [ValidateSet("Load", "Battery", "0", "1")]

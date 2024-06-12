@@ -1,7 +1,7 @@
 function ConvertTo-Boolean($string) {
-    $booleanValue = if ($String -eq "true" -or $String -eq $true) {
+    $booleanValue = if ($string -eq "true" -or $string -eq $true -or $string -eq "1") {
         $true
-    } elseif ($String -eq "false" -or $String -eq $false) {
+    } elseif ($string -eq "false" -or $string -eq $false -or $string -eq "0") {
         $false
     } else {
         $null
