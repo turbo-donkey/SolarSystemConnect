@@ -69,7 +69,7 @@ PowerShellVersion = '5.1'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Connect-SSC','Get-SSCPlant','Get-SSCPlantInfo','Get-SSCUser','Get-SSCNotifications','Get-SSCPowerFlow','Get-SSCGenerationPurpose','Get-SSCAbnormalStatistics','Get-SSCWeatherInfo','Get-SSCInverter','Get-SSCInverterSystemMode','Set-SSCInverterSystemMode','Get-SSCInverterLogs','Get-SSCGateway','Restart-SSCGateway','Set-SSCGateway')
+FunctionsToExport = @('Connect-SSC','Get-SSCPlant','Get-SSCPlantInfo','Get-SSCUser','Get-SSCNotifications','Get-SSCPowerFlow','Get-SSCGenerationPurpose','Get-SSCAbnormalStatistics','Get-SSCWeatherInfo','Get-SSCInverter','Get-SSCInverterSystemMode','Set-SSCInverterSystemMode','Get-SSCInverterLogs','Get-SSCGateway','Restart-SSCGateway','Set-SSCGateway','Show-SSCPlantDashboard')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()

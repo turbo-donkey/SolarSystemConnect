@@ -1,4 +1,4 @@
-function Show-PlantDashboard {
+function Show-SSCPlantDashboard {
     if (-not($plant)) {$plant = Get-SSCPlant}
     if (-not($plantInfo)) {$plantInfo = Get-SSCPlantInfo -PlantId $plant.Id}
     if (-not($user)) {$user = Get-SSCUser}
@@ -8,12 +8,13 @@ function Show-PlantDashboard {
     $powerFlow = Get-SSCPowerFlow -PlantId $plant.Id
     $generationPurpose = Get-SSCGenerationPurpose -PlantId $plant.Id
     $maxSellPower = $inverterSystemMode.MaxSellPower
+    $weatherInfo = Get-SSCWeatherInfo -PlantId $plant.Id
     [single]$exportPercent = (($powerflow.GridPower * 100 ) / $maxSellPower)
     $icons = [PSCustomObject]@{
-        Solar = '[☼]'
+        Solar = "[$([string]([char]0x263C))]"
         Inverter = '[=/~]'
-        Home = '[⌂]'
-        Battery = '[≣]'
+        Home = "[$([string]([char]0x2302))]"
+        Battery = "[$([string]([char]0x2263))]"
         Grid = "[$([string]([char]0x253C))]"
         BottomLeft = [string]([char]0x250F)
         BottomRight = [string]([char]0x2513)
@@ -79,16 +80,16 @@ function Show-PlantDashboard {
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "Weather: $(($weatherInfo).Descrpition)")
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "Temperature: $($weatherInfo.CurrentTempC)$([char]0x00B0)C")
     $display += (Write-TableLine -LineStyle "Blank")
-    $display += (Write-TableLine -LineStyle "DoubleItem" -Item1 "$([Math]::Round(($powerFlow.PVPower),2) / 1000)kW" -Item2 "$(if ($powerFlow.GridPower -eq '0') {"0.000"} else {$([Math]::Round(($powerFlow.GridPower) / 1000),2)})kW")
+    $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$([Math]::Round(($powerFlow.PVPower),2) / 1000)kW                                           $(if ($powerFlow.GridPower -eq '0') {"0.000"} else {$([double](($powerFlow.GridPower) / 1000))})kW")
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$solarGridLine")
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$($icons.Inverter)")
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$batteryLoadLine")
-    $display += (Write-TableLine -LineStyle "DoubleItem" -Item1 "$([Math]::Round(($powerFlow.BatteryPower),2) / 1000)kW" -Item2 "$([Math]::Round(($powerFlow.LoadPower),2) / 1000)kW")
+    $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$([Math]::Round(($powerFlow.BatteryPower),2) / 1000)kW                                           $([Math]::Round(($powerFlow.LoadPower),2) / 1000)kW")
     $display += (Write-TableLine -LineStyle "Blank")
-    $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$(if ($powerflow.GridExport) {"Grid Power (Export)"} else {if ($powerflow.GridExport) {"Grid Power (Importing)"} else {"Grid Power (Idle)"}}): $(($powerflow).GridPower)W / $($exportCapacity)W")
+    $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$(if ($powerflow.GridExport) {"Grid Power (Export)"} else {if ($powerflow.GridExport) {"Grid Power (Importing)"} else {"Grid Power (Idle)"}}): $(($powerflow).GridPower)W / $($maxSellPower)W")
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$(Write-PercentageBar -Width ($dimensions.cols - 60) -Percent $exportPercent)")
     $display += (Write-TableLine -LineStyle "Blank")
-    $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "PV Generation: $(($powerflow).PVPower)W / $($plantCapacity)W")
+    $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "PV Generation: $(($powerflow).PVPower)W / $(($plantInfo).CapacitykWp)kWp")
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$(Write-PercentageBar -Width ($dimensions.cols - 60) -Percent $pvPercent)")
     $display += (Write-TableLine -LineStyle "Blank")
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "State of Charge: $(($powerflow).BatterySOC)%")
