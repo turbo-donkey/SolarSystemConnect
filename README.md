@@ -6,6 +6,8 @@
 # SolarSystemConnect is a PowerShell wrapper for the SunSynk Connect API
 </div>
 <div align=left>
+
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/{owner}/{repo}/badge)](https://scorecard.dev/viewer/?uri=github.com/{owner}/{repo})
   
 ## Example Use
 
