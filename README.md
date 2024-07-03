@@ -7,7 +7,7 @@
 </div>
 <div align=left>
 
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/turbo-donkey/SolarSystemConnect/badge)](https://scorecard.dev/viewer/?uri=github.com/turbo-donkey/SolarSystemConnect)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/turbo-donkey/SolarSystemConnect/badge)](https://scorecard.dev/viewer/?uri=github.com/turbo-donkey/SolarSystemConnect) [![PSScriptAnalyzer](https://github.com/turbo-donkey/SolarSystemConnect/actions/workflows/powershell.yml/badge.svg)](https://github.com/turbo-donkey/SolarSystemConnect/actions/workflows/powershell.yml)
   
 ## Example Use
 
