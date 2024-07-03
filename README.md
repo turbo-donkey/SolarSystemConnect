@@ -7,7 +7,7 @@
 </div>
 <div align=left>
 
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/{owner}/{repo}/badge)](https://scorecard.dev/viewer/?uri=github.com/{owner}/{repo})
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/turbo-donkey/SolarSystemConnect/badge)](https://scorecard.dev/viewer/?uri=github.com/turbo-donkey/SolarSystemConnect)
   
 ## Example Use
 
