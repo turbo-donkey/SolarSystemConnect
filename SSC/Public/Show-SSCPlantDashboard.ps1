@@ -9,6 +9,7 @@ function Show-SSCPlantDashboard {
     $generationPurpose = Get-SSCGenerationPurpose -PlantId $plant.Id
     $maxSellPower = $inverterSystemMode.MaxSellPower
     $weatherInfo = Get-SSCWeatherInfo -PlantId $plant.Id
+    [single]$pvPercent = (($powerflow.PVPower * 100 ) / ([double]$plantInfo.CapacitykWp * 1000))
     [single]$exportPercent = (($powerflow.GridPower * 100 ) / $maxSellPower)
     $icons = [PSCustomObject]@{
         Solar = "[$([string]([char]0x263C))]"
@@ -89,7 +90,7 @@ function Show-SSCPlantDashboard {
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$(if ($powerflow.GridExport) {"Grid Power (Export)"} else {if ($powerflow.GridExport) {"Grid Power (Importing)"} else {"Grid Power (Idle)"}}): $(($powerflow).GridPower)W / $($maxSellPower)W")
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$(Write-PercentageBar -Width ($dimensions.cols - 60) -Percent $exportPercent)")
     $display += (Write-TableLine -LineStyle "Blank")
-    $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "PV Generation: $(($powerflow).PVPower)W / $(($plantInfo).CapacitykWp)kWp")
+    $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "PV Generation: $(($powerflow).PVPower)W / $([double]$(($plantInfo).CapacitykWp) * 1000)kWp")
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "$(Write-PercentageBar -Width ($dimensions.cols - 60) -Percent $pvPercent)")
     $display += (Write-TableLine -LineStyle "Blank")
     $display += (Write-TableLine -LineStyle "SingleItem" -Item1 "State of Charge: $(($powerflow).BatterySOC)%")
