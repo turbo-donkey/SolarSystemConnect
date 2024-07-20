@@ -2,7 +2,7 @@ function Show-SSCPlantDashboard {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false)]
-        [switch]$tail
+        [switch]$Tail
     )
 
     do {
