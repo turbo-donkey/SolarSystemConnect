@@ -46,7 +46,7 @@ function Get-SSCInverter {
             GenerationTotalkWh = [int]$inverer.etotal
             LastUpdate = [DateTime]$inverter.updateAt
             SynSynkEquipment = ConvertTo-Boolean $inverter.sunsynkEquip
-            ProtocolIdentifier = [int]$inverter.protocolIdentifier
+            ProtocolIdentifier = [string]$inverter.protocolIdentifier
             EquipmentType = [int]$inverter.equipType
         }
     }
